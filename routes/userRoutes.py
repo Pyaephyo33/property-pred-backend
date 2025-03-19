@@ -1,7 +1,8 @@
 from flask import Blueprint, request, jsonify
 from models import User
-from extensions import db, bcrypt
-from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+from extensions import db, bcrypt, jwt
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, get_jwt, JWTManager, jwt_manager
+from datetime import datetime, timedelta
 
 user_bp = Blueprint('user_bp', __name__)
 
@@ -27,9 +28,13 @@ def login():
     data = request.get_json()
     user = User.query.filter_by(email=data['email']).first()
 
+    # if user and bcrypt.check_password_hash(user.password, data['password']):
+    #     access_token = create_access_token(identity=user.userId)
+    #     return jsonify({'access_token': access_token})
     if user and bcrypt.check_password_hash(user.password, data['password']):
-        access_token = create_access_token(identity=user.userId)
+        access_token = create_access_token(identity=str(user.userId))
         return jsonify({'access_token': access_token})
+
     
     return jsonify({'messsage': 'Invalid credentials'}), 401
 
@@ -94,9 +99,19 @@ def toggle_status(user_id):
     return jsonify({'message': f'User status updated to {user.status}'}), 200
 
 
+
+# Blacklist storage (for production, use a persistent store like Redis)
+blacklist = set()
+
+# Logout route to blacklist the token
 @user_bp.route('/logout', methods=['POST'])
 @jwt_required()
 def logout():
-    # logout user by invalidating JWT (if blacklist mechanism is implemented).
+    jti = get_jwt()["jti"]  # Retrieve the token's unique identifier
+    blacklist.add(jti)      # Add the token to the blacklist
     return jsonify({'message': 'Logout successful'}), 200
 
+# Function to check if a token is in the blocklist
+@jwt.token_in_blocklist_loader
+def check_if_token_in_blocklist(jwt_header, jwt_payload):
+    return jwt_payload["jti"] in blacklist
