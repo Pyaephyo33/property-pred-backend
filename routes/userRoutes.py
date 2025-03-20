@@ -3,6 +3,7 @@ from models import User
 from extensions import db, bcrypt, jwt
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, get_jwt, JWTManager, jwt_manager
 from datetime import datetime, timedelta
+from sqlalchemy import or_
 
 user_bp = Blueprint('user_bp', __name__)
 
@@ -70,18 +71,28 @@ def delete_user(user_id):
 
 @user_bp.route('/search', methods=['GET'])
 def search_user():
-    # search user
     email = request.args.get('email')
-    user = User.query.filter_by(email=email).first()
-    
-    if not user:
-        return jsonify({'message': 'User not found'}), 404
-    
-    return jsonify({
-        'userId': user.userId,
-        'email': user.email,
-        'status': user.status
-    }), 200
+    status = request.args.get('status')
+
+    # Query to find users where either email matches or status matches
+    users = User.query.filter(
+        or_(
+            User.email == email if email else False,  # Match email if provided
+            User.status == status if status else False  # Match status if provided
+        )
+    ).all()
+
+    if not users:
+        return jsonify({'message': 'No users found'}), 404
+
+    # Return all matching users
+    result = [
+        {'userId': user.userId, 'email': user.email, 'status': user.status}
+        for user in users
+    ]
+
+    return jsonify(result), 200
+
 
 
 @user_bp.route('/toggle-status/<int:user_id>', methods=['PATCH'])
