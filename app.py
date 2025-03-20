@@ -1,8 +1,11 @@
 from flask import Flask
 from config import Config
 from extensions import db, bcrypt, jwt
+
+# api routes
 from routes.userRoutes import user_bp
 from routes.propertyRoutes import property_bp
+from routes.userInfoRoutes import userInfo_bp
 
 def create_app():
     """Factory function to create and configure the Flask app."""
@@ -17,6 +20,7 @@ def create_app():
     # Register blueprints
     app.register_blueprint(user_bp, url_prefix='/api/users')
     app.register_blueprint(property_bp, url_prefix='/api/properties')
+    app.register_blueprint(userInfo_bp, url_prefix='/api/user-info')
 
     # Create database tables if they don’t exist
     with app.app_context():
