@@ -6,6 +6,7 @@ from extensions import db, bcrypt, jwt
 from routes.userRoutes import user_bp
 from routes.propertyRoutes import property_bp
 from routes.userInfoRoutes import userInfo_bp
+from routes.interactionHistoryRoutes import interaction_bp
 
 def create_app():
     """Factory function to create and configure the Flask app."""
@@ -21,6 +22,7 @@ def create_app():
     app.register_blueprint(user_bp, url_prefix='/api/users')
     app.register_blueprint(property_bp, url_prefix='/api/properties')
     app.register_blueprint(userInfo_bp, url_prefix='/api/user-info')
+    app.register_blueprint(interaction_bp, url_prefix='/api/inter-history')
 
     # Create database tables if they don’t exist
     with app.app_context():
