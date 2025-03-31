@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from extensions import db
 
 class User(db.Model):
@@ -58,3 +59,10 @@ class PropertyAmenities(db.Model):
     garden = db.Column(db.Boolean, default=False)
     energyEfficiencyRating = db.Column(db.String(10))
     numBathrooms = db.Column(db.Integer)
+
+class PropertyPrediction(db.Model):
+    predictionId = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    propertyId = db.Column(db.Integer, db.ForeignKey('property.propertyId'), nullable=False)
+    predictedPrices = db.Column(db.JSON)
+    predictionYears = db.Column(db.JSON)
+    datePredicted = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))

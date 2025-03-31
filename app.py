@@ -8,6 +8,7 @@ from routes.propertyRoutes import property_bp
 from routes.userInfoRoutes import userInfo_bp
 from routes.interactionHistoryRoutes import interaction_bp
 from routes.preferenceDislikeRoutes import dislike_bp, preference_bp
+from routes.propertyHistoryPredictionRoutes import property_history_bp
 
 def create_app():
     """Factory function to create and configure the Flask app."""
@@ -26,6 +27,7 @@ def create_app():
     app.register_blueprint(interaction_bp, url_prefix='/api/inter-history')
     app.register_blueprint(preference_bp, url_prefix='/api/preference')
     app.register_blueprint(dislike_bp, url_prefix='/api/dislike')
+    app.register_blueprint(property_history_bp, url_prefix='/api/history-prediction')
 
     # Create database tables if they don’t exist
     with app.app_context():

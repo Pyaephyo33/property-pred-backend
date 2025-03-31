@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from models import Property
+from models import Property, PropertyHistory, PropertyPrediction
 from extensions import db
 from flask_jwt_extended import jwt_required
 from sqlalchemy import or_, and_
@@ -163,17 +163,46 @@ def toggle_property_status(property_id):
 
 
 # delete property api
+# @property_bp.route('/<int:propertyId>', methods=['DELETE'])
+# @jwt_required()
+# def delete_property(propertyId):
+#     # Find the property by propertyId
+#     property_to_delete = Property.query.get(propertyId)
+
+#     # If the property is not found, return a 404 error
+#     if not property_to_delete:
+#         return jsonify({'message': 'Property not found'}), 404
+
+#     # Delete the property
+#     db.session.delete(property_to_delete)
+#     db.session.commit()
+#     return jsonify({'message': 'Property deleted successfully'}), 200
+
+
 @property_bp.route('/<int:propertyId>', methods=['DELETE'])
 @jwt_required()
 def delete_property(propertyId):
-    # Find the property by propertyId
-    property_to_delete = Property.query.get(propertyId)
+    try:
+        # Find the property by propertyId
+        property_to_delete = Property.query.get(propertyId)
 
-    # If the property is not found, return a 404 error
-    if not property_to_delete:
-        return jsonify({'message': 'Property not found'}), 404
+        # If the property is not found, return a 404 error
+        if not property_to_delete:
+            return jsonify({'message': 'Property not found'}), 404
 
-    # Delete the property
-    db.session.delete(property_to_delete)
-    db.session.commit()
-    return jsonify({'message': 'Property deleted successfully'}), 200
+        # Delete associated PropertyHistory records
+        PropertyHistory.query.filter_by(propertyId=propertyId).delete()
+
+        # Delete associated PropertyPrediction records
+        PropertyPrediction.query.filter_by(propertyId=propertyId).delete()
+
+        # Delete the property itself
+        db.session.delete(property_to_delete)
+
+        db.session.commit()
+
+        return jsonify({'message': 'Property and associated data deleted successfully'}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'message': f'An error occurred: {str(e)}'}), 500
