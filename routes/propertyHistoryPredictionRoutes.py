@@ -3,19 +3,18 @@ from models import db, PropertyHistory, PropertyPrediction, Property
 from datetime import datetime, timezone
 import joblib
 import pandas as pd
+import xgboost as xgb
 from flask_jwt_extended import jwt_required
 
 property_history_bp = Blueprint('property_history_bp', __name__)
 
-# Fallback: Use a simple linear estimation instead of ML model
-# since model is producing flat results
+# Load model and scaler
+model = xgb.XGBRegressor()
+model.load_model('ml_model.json')
+scaler = joblib.load('ml_model_scaler.pkl')
+with open('ml_model_features.txt') as f:
+    model_features = [line.strip() for line in f.readlines()]
 
-def naive_price_projection(base_price, rent, year_offset):
-    growth_rate = 0.03 + (0.005 * year_offset)  # compound growth
-    rent_adjustment = rent * (1 + 0.01 * year_offset)
-    return base_price * (1 + growth_rate) + rent_adjustment
-
-# Endpoint to add new property history and predict future prices
 @property_history_bp.route('/property-history', methods=['POST'])
 @jwt_required()
 def add_history_and_predict():
@@ -43,16 +42,30 @@ def add_history_and_predict():
         db.session.add(history_record)
         db.session.commit()
 
+        # Generate predictions for 5 future years
         predicted_prices = []
         prediction_years = []
         current_year = datetime.now(timezone.utc).year
 
         for i, year in enumerate(range(current_year, current_year + 5)):
-            predicted_price = round(naive_price_projection(
-                base_price=property_record.price,
-                rent=float(data['historicalRent']),
-                year_offset=i
-            ), 2)
+            growth_factor = 1 + (0.02 * i)
+
+            input_dict = {
+                'historicalPrice': property_record.price * growth_factor,
+                'historicalRent': float(data['historicalRent']) * (1 + 0.01 * i),
+                'year': year,
+                'month': datetime.now().month,
+                'propertySize': property_record.propertySize,
+                'siteArea': getattr(property_record, 'siteArea', 0.01),
+                'councilTax': getattr(property_record, 'councilTax', 1000),
+                'pricePerSqMeter': property_record.price / (property_record.propertySize or 1),
+                'historyCount': 5
+            }
+
+            row = pd.DataFrame([input_dict])
+            row = row.reindex(columns=model_features, fill_value=0)
+            row_scaled = scaler.transform(row)
+            predicted_price = float(model.predict(row_scaled)[0]) * (1 + 0.02 * i)
 
             predicted_prices.append(predicted_price)
             prediction_years.append(year)

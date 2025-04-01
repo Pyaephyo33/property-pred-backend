@@ -1,0 +1,28 @@
+historicalPrice
+historicalRent
+year
+month
+propertySize
+siteArea
+councilTax
+pricePerSqMeter
+historyCount
+propertyType_Field Study Centre/Camp
+propertyType_Garage/Garages/Car Parking - Domestic
+propertyType_Hostel/Homeless Accommodation
+propertyType_Hotel/Guest House
+propertyType_House Service Occupancy
+propertyType_House/Houses
+propertyType_Land-Housing Non-Council Development
+propertyType_Land-Open Store/Yard
+propertyType_Land-Residential
+propertyType_Land-Retail/Commercial
+propertyType_Land-Travellers Site
+propertyType_Land-Unused Land
+propertyType_Public House
+propertyType_Scout/Guide Building
+propertyType_Scout/Guide Building Land
+propertyType_Showroom
+propertyType_Sports Building/Hall/Facility
+propertyType_Statue/Monument/Fountain
+propertyType_Swimming Pool
