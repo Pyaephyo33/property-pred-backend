@@ -31,7 +31,15 @@ def add_history_and_predict():
 
         existing_prediction = PropertyPrediction.query.filter_by(propertyId=data['propertyId']).first()
         if existing_prediction:
-            return jsonify({'message': 'Predictions already exist for this property.'}), 400
+             return jsonify({
+                    'message': 'Existing predictions retrieved successfully.',
+                    'propertyId': data['propertyId'],
+                    'predictions': [
+                        {'year': year, 'predictedPrice': price}
+                        for year, price in zip(existing_prediction.predictionYears, existing_prediction.predictedPrices)
+                    ],
+                    'datePredicted': existing_prediction.datePredicted.isoformat()
+                }), 200
 
         history_record = PropertyHistory(
             propertyId=data['propertyId'],
